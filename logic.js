@@ -1,91 +1,79 @@
-const M_KEY = "com.skullclone.osr_move";
+const M_ID = "com.skullclone.ose_sheet";
 
 OBR.onReady(async () => {
-    let state = { turn: 1, lightOn: false, torch: 6, limit: 120, freq: 2 };
+    const sheet = document.getElementById('sheet');
+    const noSelection = document.getElementById('no-selection');
 
-    const turnDisp = document.getElementById('turnCounter');
-    const lightDisp = document.getElementById('lightCounter');
-    const lightBtn = document.getElementById('lightToggle');
-
-    const load = async () => {
-        const meta = await OBR.scene.getMetadata();
-        if (meta[M_KEY]) state = { ...state, ...meta[M_KEY] };
-        turnDisp.innerText = state.turn;
-        lightDisp.innerText = state.lightOn ? state.torch : "OFF";
-    };
-
-    // Bloqueo de Movimiento
-    OBR.scene.items.onChange(async (items) => {
-        const isGM = (await OBR.player.getRole()) === "GM";
-        const restrictGM = document.getElementById('restrictGM').checked;
-        const limit = parseInt(document.getElementById('moveLimit').value);
-        const grid = await OBR.scene.grid.getScale();
-        
-        const updates = [];
-        const tokens = items.filter(i => i.layer === "CHARACTER");
-
-        for (const token of tokens) {
-            let start = token.metadata[M_KEY];
-            // Si no tiene posición de inicio o es de otro turno, inicializar
-            if (!start || start.turn !== state.turn) {
-                updates.push({ 
-                    id: token.id, 
-                    metadata: { ...token.metadata, [M_KEY]: { x: token.position.x, y: token.position.y, turn: state.turn } } 
-                });
-                continue;
-            }
-
-            if (isGM && !restrictGM) continue;
-
-            // Calcular distancia usando la API
-            const dist = await OBR.scene.grid.distanceBetween({ x: start.x, y: start.y }, token.position);
-            
-            if (dist > limit + 0.5) {
-                updates.push({ id: token.id, position: { x: start.x, y: start.y } });
-                OBR.notification.show("Límite de movimiento alcanzado");
-            }
-        }
-
-        if (updates.length > 0) {
-            await OBR.scene.items.updateItems(updates.map(u => u.id), (items) => {
-                updates.forEach(u => {
-                    const item = items.find(i => i.id === u.id);
-                    if (u.position) item.position = u.position;
-                    if (u.metadata) item.metadata = u.metadata;
-                });
-            });
-        }
+    // Función para mapear los inputs
+    const getFields = () => ({
+        name: document.getElementById('charName'),
+        class: document.getElementById('charClass'),
+        level: document.getElementById('level'),
+        str: document.getElementById('str'),
+        int: document.getElementById('int'),
+        wis: document.getElementById('wis'),
+        dex: document.getElementById('dex'),
+        con: document.getElementById('con'),
+        cha: document.getElementById('cha'),
+        hp: document.getElementById('hp'),
+        hpMax: document.getElementById('hpMax'),
+        ac: document.getElementById('ac'),
+        sDeath: document.getElementById('sDeath'),
+        sWands: document.getElementById('sWands'),
+        sPara: document.getElementById('sPara'),
+        sBreath: document.getElementById('sBreath'),
+        sSpell: document.getElementById('sSpell')
     });
 
-    document.getElementById('nextTurnBtn').onclick = async () => {
-        state.turn++;
-        if (state.lightOn && state.torch > 0) state.torch--;
-        
-        const freq = parseInt(document.getElementById('encounterFreq').value);
-        if (state.turn % freq === 0) OBR.notification.show("¡Tirada de Encuentro!", "WARNING");
+    // Cargar datos del token seleccionado
+    async function loadSelectedToken() {
+        const selection = await OBR.player.getSelection();
+        if (!selection || selection.length === 0) {
+            sheet.style.display = 'none';
+            noSelection.style.display = 'block';
+            return;
+        }
 
-        await OBR.scene.setMetadata({ [M_KEY]: state });
-        
-        // Resetear todos los tokens
-        const tokens = await OBR.scene.items.getItems(i => i.layer === "CHARACTER");
-        await OBR.scene.items.updateItems(tokens.map(t => t.id), (items) => {
-            items.forEach(item => {
-                item.metadata[M_KEY] = { x: item.position.x, y: item.position.y, turn: state.turn };
-            });
+        const items = await OBR.scene.items.getItems([selection[0]]);
+        const token = items[0];
+
+        if (token) {
+            sheet.style.display = 'block';
+            noSelection.style.display = 'none';
+            const data = token.metadata[M_ID] || {};
+            const fields = getFields();
+            
+            // Rellenar la ficha
+            for (let key in fields) {
+                fields[key].value = data[key] || (fields[key].type === "number" ? 0 : "");
+            }
+        }
+    }
+
+    // Guardar datos en el token
+    document.getElementById('saveBtn').onclick = async () => {
+        const selection = await OBR.player.getSelection();
+        if (!selection) return;
+
+        const fields = getFields();
+        const data = {};
+        for (let key in fields) {
+            data[key] = fields[key].value;
+        }
+
+        await OBR.scene.items.updateItems(selection, (items) => {
+            for (let item of items) {
+                item.metadata[M_ID] = data;
+            }
         });
-        load();
+        OBR.notification.show("Ficha actualizada");
     };
 
-    lightBtn.onclick = () => {
-        state.lightOn = !state.lightOn;
-        if (state.lightOn && state.torch === 0) state.torch = 6;
-        save();
-    };
+    // Detectar cuando el usuario cambia de selección
+    OBR.player.onSelectionChange(() => {
+        loadSelectedToken();
+    });
 
-    const save = async () => {
-        await OBR.scene.setMetadata({ [M_KEY]: state });
-        load();
-    };
-
-    await load();
+    // Carga inicial
+    loadSelectedToken();
 });
