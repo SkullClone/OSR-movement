@@ -2,52 +2,27 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>OSR Movement Pro</title>
-    <!-- ESTA LÍNEA DE ABAJO ES LA QUE HACE LA MAGIA -->
     <script src="https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@latest/dist/obr-sdk.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #222639; color: #e0e0e0; padding: 12px; font-size: 13px; }
-        h2 { margin: 0 0 12px 0; font-size: 1.1rem; color: #BB86FC; border-bottom: 1px solid #444; padding-bottom: 8px;}
-        .section { margin-bottom: 16px; background: #2b304a; padding: 12px; border-radius: 8px; }
-        label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; }
-        input[type="checkbox"] { accent-color: #BB86FC; }
-        input[type="number"] { background: #111; border: 1px solid #555; color: white; padding: 4px 8px; width: 60px; border-radius: 4px; text-align: center; }
-        button { width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 8px; }
-        .btn-primary { background: linear-gradient(135deg, #BB86FC 0%, #7d3ebd 100%); color: #fff; }
-        .btn-secondary { background-color: #444; color: white; }
-        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        body { font-family: sans-serif; background-color: #222639; color: #e0e0e0; padding: 10px; font-size: 13px; }
+        .section { margin-bottom: 10px; background: #2b304a; padding: 10px; border-radius: 8px; border: 1px solid #444; }
+        button { width: 100%; padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: #BB86FC; color: #000; margin-top: 5px; }
+        input { background: #111; border: 1px solid #555; color: white; padding: 4px; border-radius: 4px; width: 50px; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="section">
-        <div class="row">
-            <span style="font-weight: bold; color: #BB86FC;">Turno Actual</span>
-            <span id="turn-count" style="background: #333; padding: 2px 6px; border-radius: 4px;">1</span>
-        </div>
-        <div class="row">
-            <span>🎲 Encuentro cada:</span>
-            <input type="number" id="encounter-freq" value="2">
-        </div>
-        <button id="next-turn-btn" class="btn-primary">⏭️ SIGUIENTE TURNO</button>
+        <div class="row"><span>Turno Actual:</span><b id="turn-count">1</b></div>
+        <button id="next-turn-btn">⏭️ SIGUIENTE TURNO</button>
     </div>
-    <div class="section" id="config-section">
-        <label><input type="checkbox" id="gm-ignored" checked> Inmunidad GM</label>
-        <label style="color: #CF6679;"><input type="checkbox" id="total-lock"> 🔒 BLOQUEO TOTAL</label>
-        <div style="margin: 10px 0;">
-            <label><input type="radio" name="mode" value="global" checked> Global</label>
-            <label><input type="radio" name="mode" value="individual"> Por Token</label>
-        </div>
-        <div id="global-settings">
-            <div class="row"><span>Límite (<span id="unit-label">ft</span>):</span><input type="number" id="global-limit" value="120"></div>
-        </div>
-        <div id="individual-settings" class="hidden">
-            <div id="token-editor" class="hidden">
-                <div id="token-name" style="color: #03DAC6;"></div>
-                <input type="number" id="token-limit" placeholder="Auto">
-                <button id="save-token-btn" class="btn-secondary">Guardar</button>
-            </div>
-            <p id="no-selection-msg">Selecciona un token.</p>
+    <div class="section">
+        <label><input type="checkbox" id="gm-ignored" checked> Inmunidad GM</label><br>
+        <label style="color: #ff8080;"><input type="checkbox" id="total-lock"> 🔒 Bloqueo Total</label>
+        <div class="row" style="margin-top:10px;">
+            <span>Límite Global:</span>
+            <input type="number" id="global-limit" value="120">
         </div>
     </div>
     <script src="logic.js"></script>
