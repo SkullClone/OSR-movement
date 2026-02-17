@@ -4,31 +4,23 @@
     <meta charset="utf-8">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
-        body { background: #121212; color: #33ff33; font-family: monospace; padding: 12px; font-size: 13px; }
-        .container { display: flex; flex-direction: column; gap: 10px; }
-        .row { display: flex; align-items: center; justify-content: space-between; }
-        .counter { font-size: 20px; font-weight: bold; background: #1e1e1e; padding: 5px 10px; border: 1px solid #33ff33; color: white; }
-        button { background: #2a2a2a; border: 1px solid #33ff33; color: #33ff33; padding: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        body { background: #121212; color: #33ff33; font-family: monospace; padding: 15px; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
+        .counter { background: #1e1e1e; padding: 5px 10px; border: 1px solid #33ff33; font-weight: bold; }
+        button { background: #2a2a2a; border: 1px solid #33ff33; color: #33ff33; padding: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
         button:hover { background: #33ff33; color: #121212; }
-        input { background: #1e1e1e; border: 1px solid #33ff33; color: #33ff33; padding: 4px; width: 50px; }
-        .label { text-transform: uppercase; font-size: 10px; color: #888; }
+        input { background: #1e1e1e; border: 1px solid #33ff33; color: #33ff33; padding: 4px; width: 60px; }
+        label { font-size: 10px; color: #888; text-transform: uppercase; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row"><span>Turno</span><div class="counter" id="turnCounter">1</div></div>
-        <div class="row"><span>Antorcha</span><div style="display:flex; gap:5px; align-items:center;">
-            <span id="lightCounter" class="counter">6</span>
-            <button id="toggleLightBtn" style="width:auto; font-size:10px;">ON/OFF</button>
-        </div></div>
-        <div class="row"><span class="label">Encuentro cada</span><input type="number" id="encFreq" value="2"></div>
-        <div class="row"><span class="label">Límite (Pies)</span><input type="number" id="moveLimit" value="120"></div>
-        <div class="row">
-            <input type="checkbox" id="restrictGM" style="width:auto;">
-            <span class="label">Restringir GM</span>
-        </div>
-        <button id="nextTurnBtn" style="background:#400; color:white;">SIGUIENTE TURNO</button>
-    </div>
+    <div class="row"><span>TURNO</span><span class="counter" id="turnCounter">1</span></div>
+    <div class="row"><span>LUZ</span><span class="counter" id="lightCounter">6</span></div>
+    <button id="lightToggle">LUZ: OFF</button>
+    <div class="row"><label>LÍMITE (PIES)</label><input type="number" id="moveLimit" value="120"></div>
+    <div class="row"><label>ENCUENTRO (CAD)</label><input type="number" id="encounterFreq" value="2"></div>
+    <div class="row"><span>Restringir GM</span><input type="checkbox" id="restrictGM"></div>
+    <button id="nextTurnBtn" style="background:#400; border-color:#f00; color:white;">SIGUIENTE TURNO</button>
     <script src="logic.js"></script>
 </body>
 </html>
