@@ -4,24 +4,41 @@
     <meta charset="UTF-8">
     <script src="https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@latest/dist/obr-sdk.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #222639; color: #e0e0e0; padding: 10px; font-size: 13px; }
-        .section { margin-bottom: 10px; background: #2b304a; padding: 10px; border-radius: 8px; border: 1px solid #444; }
-        button { width: 100%; padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: #BB86FC; color: #000; margin-top: 5px; }
-        input { background: #111; border: 1px solid #555; color: white; padding: 4px; border-radius: 4px; width: 50px; }
-        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        body { font-family: 'Inter', sans-serif; background-color: #222639; color: #e0e0e0; padding: 12px; font-size: 13px; }
+        .section { margin-bottom: 12px; background: #2b304a; padding: 12px; border-radius: 8px; border: 1px solid #444; }
+        h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #BB86FC; text-transform: uppercase; letter-spacing: 1px; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        button { width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; background: #BB86FC; color: #000; margin-top: 5px; }
+        button:hover { filter: brightness(1.1); }
+        input[type="number"] { background: #111; border: 1px solid #555; color: white; padding: 4px; width: 45px; border-radius: 4px; text-align: center; }
+        .torch-box { border-left: 3px solid #FFAB40; padding-left: 8px; }
+        .tag { background: #333; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #03DAC6; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="section">
-        <div class="row"><span>Turno Actual:</span><b id="turn-count">1</b></div>
+        <h3>⌛ Turno y Exploración</h3>
+        <div class="row"><span>Turno Actual:</span><span id="turn-count" class="tag">1</span></div>
+        <div class="row"><span>🎲 Encuentro cada:</span><input type="number" id="encounter-freq" value="2"></div>
         <button id="next-turn-btn">⏭️ SIGUIENTE TURNO</button>
     </div>
+
+    <div class="section torch-box">
+        <h3>🔥 Gestión de Antorchas</h3>
+        <div class="row"><span>Antorchas Activas:</span><input type="number" id="torch-count" value="0"></div>
+        <div class="row"><span>Turnos x Antorcha:</span><input type="number" id="torch-duration" value="6"></div>
+        <div id="torch-status" style="font-size: 0.8em; color: #FFAB40; text-align: center; margin-top: 5px;">
+            Sin antorchas activas
+        </div>
+    </div>
+
     <div class="section">
-        <label><input type="checkbox" id="gm-ignored" checked> Inmunidad GM</label><br>
-        <label style="color: #ff8080;"><input type="checkbox" id="total-lock"> 🔒 Bloqueo Total</label>
+        <h3>📏 Configuración</h3>
+        <label style="display: block; margin-bottom: 5px;"><input type="checkbox" id="gm-ignored" checked> Inmunidad GM</label>
+        <label style="display: block; color: #CF6679;"><input type="checkbox" id="total-lock"> 🔒 Bloqueo Total</label>
         <div class="row" style="margin-top:10px;">
-            <span>Límite Global:</span>
+            <span>Límite Global (<span id="unit-label">ft</span>):</span>
             <input type="number" id="global-limit" value="120">
         </div>
     </div>
