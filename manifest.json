@@ -1,13 +1,12 @@
 {
-  "name": "OSR Movement Controller",
-  "version": "1.4.0",
+  "name": "OSR Movement",
+  "version": "1.0.0",
   "manifest_version": 1,
   "action": {
     "title": "OSR Move",
     "icon": "icon.svg",
     "popover": "index.html",
     "width": 250,
-    "height": 480
-  },
-  "permissions": ["ITEM"]
+    "height": 500
+  }
 }
