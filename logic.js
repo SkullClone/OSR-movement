@@ -1,4 +1,3 @@
-// OSR Movement Logic - Global Mode
 const ID = "com.osr-movement.pro";
 const METADATA_KEY = `${ID}/config`;
 const TOKEN_DATA_KEY = `${ID}/data`;
@@ -23,33 +22,26 @@ OBR.onReady(async () => {
 
     OBR.scene.items.onChange(async (items) => {
         if (currentUserRole === "GM" && appState.gmIgnored) return;
-
         const movedTokens = items.filter(i => i.layer === "CHARACTER" || i.layer === "MOUNT");
         if (movedTokens.length === 0) return;
-
         const updates = [];
         const metadataUpdates = [];
-
         for (const token of movedTokens) {
             const data = token.metadata[TOKEN_DATA_KEY];
             if (!data || !data.startPos) continue;
-
             if (appState.totalLock) {
                 if (calculatePixelDistance(token.position, data.startPos) > 1) {
                     updates.push({ id: token.id, position: data.startPos });
                 }
                 continue;
             }
-
             const dist = calculateDistance(data.startPos, token.position);
             let limit = appState.globalLimit;
             if (appState.mode === 'individual' && data.individualLimit != null) limit = data.individualLimit;
-
             if (dist > limit + 0.1) {
                 const safePos = data.lastValidPos || data.startPos;
                 if (token.position.x !== safePos.x || token.position.y !== safePos.y) {
                     updates.push({ id: token.id, position: safePos });
-                    showNotification(`🚫 Límite: ${limit} ${gridCache.unit}`);
                 }
             } else {
                 const lastSaved = data.lastValidPos || data.startPos;
@@ -60,11 +52,9 @@ OBR.onReady(async () => {
                 }
             }
         }
-
         if (updates.length > 0) await OBR.scene.items.updateItems(updates.map(u => u.id), (items) => {
             items.forEach(item => { const u = updates.find(x => x.id === item.id); if(u) item.position = u.position; });
         });
-        
         if (metadataUpdates.length > 0) await OBR.scene.items.updateItems(metadataUpdates.map(u => u.id), (items) => {
             for(const item of items) { const u = metadataUpdates.find(x => x.id === item.id); if(u) item.metadata = u.metadata; }
         });
@@ -86,8 +76,8 @@ function calculateDistance(p1, p2) { return (calculatePixelDistance(p1, p2) / gr
 
 async function nextTurn() {
     appState.turn++;
-    saveState();
-    if (appState.turn % appState.encounterFreq === 0) OBR.notification.show(`🎲 Turno ${appState.turn}: ¡Chequeo!`, "WARNING");
+    await OBR.scene.setMetadata({ [METADATA_KEY]: appState });
+    OBR.notification.show(`Turno ${appState.turn}`);
     const items = await OBR.scene.items.getItems(i => i.layer === "CHARACTER" || i.layer === "MOUNT");
     if (items.length > 0) await OBR.scene.items.updateItems(items.map(i => i.id), (items) => {
         for (const item of items) {
@@ -102,55 +92,30 @@ async function loadSceneMetadata() {
     if (meta[METADATA_KEY]) appState = { ...appState, ...meta[METADATA_KEY] };
     updateUI();
 }
-async function saveState() { await OBR.scene.setMetadata({ [METADATA_KEY]: appState }); }
 
 function setupUIListeners() {
     document.getElementById('next-turn-btn').onclick = nextTurn;
-    document.getElementById('global-limit').onchange = (e) => { appState.globalLimit = parseFloat(e.target.value); saveState(); };
-    document.getElementById('encounter-freq').onchange = (e) => { appState.encounterFreq = parseInt(e.target.value); saveState(); };
-    document.getElementById('gm-ignored').onchange = (e) => { appState.gmIgnored = e.target.checked; saveState(); };
-    document.getElementById('total-lock').onchange = (e) => { appState.totalLock = e.target.checked; saveState(); updateUI(); };
-    document.querySelectorAll('input[name="mode"]').forEach(el => el.onchange = (e) => { appState.mode = e.target.value; saveState(); updateUI(); });
-    document.getElementById('save-token-btn').onclick = saveTokenSettings;
+    document.getElementById('global-limit').onchange = (e) => { appState.globalLimit = parseFloat(e.target.value); OBR.scene.setMetadata({ [METADATA_KEY]: appState }); };
+    document.getElementById('gm-ignored').onchange = (e) => { appState.gmIgnored = e.target.checked; OBR.scene.setMetadata({ [METADATA_KEY]: appState }); };
+    document.getElementById('total-lock').onchange = (e) => { appState.totalLock = e.target.checked; OBR.scene.setMetadata({ [METADATA_KEY]: appState }); updateUI(); };
+    document.querySelectorAll('input[name="mode"]').forEach(el => el.onchange = (e) => { appState.mode = e.target.value; OBR.scene.setMetadata({ [METADATA_KEY]: appState }); updateUI(); });
 }
 
 function updateUI() {
     document.getElementById('turn-count').innerText = appState.turn;
     document.getElementById('global-limit').value = appState.globalLimit;
-    document.getElementById('encounter-freq').value = appState.encounterFreq;
     document.getElementById('gm-ignored').checked = appState.gmIgnored;
     document.getElementById('total-lock').checked = appState.totalLock;
-    document.getElementById('global-settings').className = appState.mode === 'global' ? '' : 'hidden';
-    document.getElementById('individual-settings').className = appState.mode === 'individual' ? '' : 'hidden';
+    document.getElementById('global-settings').style.display = appState.mode === 'global' ? 'block' : 'none';
+    document.getElementById('individual-settings').style.display = appState.mode === 'individual' ? 'block' : 'none';
 }
 
 async function handleSelection(sel) {
     const editor = document.getElementById('token-editor');
-    const msg = document.getElementById('no-selection-msg');
-    if (!sel || sel.length !== 1) { editor.className = 'hidden'; msg.className = ''; return; }
+    if (!sel || sel.length !== 1) { editor.style.display = 'none'; return; }
     const item = (await OBR.scene.items.getItems([sel[0]]))[0];
     if (item && (item.layer === "CHARACTER" || item.layer === "MOUNT")) {
-        editor.className = ''; msg.className = 'hidden';
+        editor.style.display = 'block';
         document.getElementById('token-name').innerText = item.name || "Token";
-        const data = item.metadata[TOKEN_DATA_KEY];
-        document.getElementById('token-limit').value = data?.individualLimit || "";
-        document.getElementById('save-token-btn').dataset.itemId = item.id;
     }
-}
-
-async function saveTokenSettings() {
-    const btn = document.getElementById('save-token-btn');
-    const val = document.getElementById('token-limit').value;
-    if (btn.dataset.itemId) {
-        await OBR.scene.items.updateItems([btn.dataset.itemId], (items) => {
-            items[0].metadata[TOKEN_DATA_KEY] = { ...items[0].metadata[TOKEN_DATA_KEY], individualLimit: val ? parseFloat(val) : null };
-        });
-    }
-}
-
-let notifTimer = null;
-function showNotification(msg) {
-    if (notifTimer) return;
-    notifTimer = setTimeout(() => { notifTimer = null; }, 1000);
-    OBR.notification.show(msg, "WARNING");
-}
+        }
