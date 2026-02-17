@@ -1,4 +1,4 @@
-import OBR from "@owlbear-rodeo/sdk";
+
 
 const ID = "com.osr-movement.pro";
 const METADATA_KEY = `${ID}/config`;
