@@ -1,14 +1,9 @@
 {
   "name": "OSR Movement Pro",
-  "version": "2.0.0",
+  "version": "1.0.1",
   "manifest_version": 1,
-  "description": "Control de movimiento estricto con gestión de turnos OSR.",
-  "permissions": [
-    "SCENE:ITEMS",
-    "SCENE:GRID",
-    "SCENE:METADATA",
-    "NOTIFICATIONS"
-  ],
+  "description": "Control de movimiento OSR",
+  "permissions": ["SCENE:ITEMS", "SCENE:GRID", "SCENE:METADATA", "NOTIFICATIONS"],
   "background_url": "index.html",
   "icon": "https://cdn-icons-png.flaticon.com/512/566/566312.png"
 }
