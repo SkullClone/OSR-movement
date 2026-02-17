@@ -1,7 +1,7 @@
 {
-  "name": "OSR Movement",
+  "name": "OSR Movement Controller",
   "version": "1.0.0",
-  "manifest_version": 1,
+  "manifestVersion": 1,
   "action": {
     "title": "OSR Move",
     "popover": "index.html",
