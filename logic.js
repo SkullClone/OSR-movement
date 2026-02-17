@@ -1,5 +1,4 @@
-
-
+// OSR Movement Logic - Global Mode
 const ID = "com.osr-movement.pro";
 const METADATA_KEY = `${ID}/config`;
 const TOKEN_DATA_KEY = `${ID}/data`;
@@ -38,7 +37,6 @@ OBR.onReady(async () => {
             if (appState.totalLock) {
                 if (calculatePixelDistance(token.position, data.startPos) > 1) {
                     updates.push({ id: token.id, position: data.startPos });
-                    showNotification("🔒 Fase de Declaración: Bloqueado");
                 }
                 continue;
             }
@@ -66,7 +64,8 @@ OBR.onReady(async () => {
         if (updates.length > 0) await OBR.scene.items.updateItems(updates.map(u => u.id), (items) => {
             items.forEach(item => { const u = updates.find(x => x.id === item.id); if(u) item.position = u.position; });
         });
-        else if (metadataUpdates.length > 0) await OBR.scene.items.updateItems(metadataUpdates.map(u => u.id), (items) => {
+        
+        if (metadataUpdates.length > 0) await OBR.scene.items.updateItems(metadataUpdates.map(u => u.id), (items) => {
             for(const item of items) { const u = metadataUpdates.find(x => x.id === item.id); if(u) item.metadata = u.metadata; }
         });
     });
@@ -88,9 +87,7 @@ function calculateDistance(p1, p2) { return (calculatePixelDistance(p1, p2) / gr
 async function nextTurn() {
     appState.turn++;
     saveState();
-    if (appState.turn % appState.encounterFreq === 0) OBR.notification.show(`🎲 Turno ${appState.turn}: ¡Chequeo de Encuentro!`, "WARNING");
-    else OBR.notification.show(`🔄 Turno ${appState.turn} iniciado.`, "SUCCESS");
-
+    if (appState.turn % appState.encounterFreq === 0) OBR.notification.show(`🎲 Turno ${appState.turn}: ¡Chequeo!`, "WARNING");
     const items = await OBR.scene.items.getItems(i => i.layer === "CHARACTER" || i.layer === "MOUNT");
     if (items.length > 0) await OBR.scene.items.updateItems(items.map(i => i.id), (items) => {
         for (const item of items) {
@@ -108,13 +105,13 @@ async function loadSceneMetadata() {
 async function saveState() { await OBR.scene.setMetadata({ [METADATA_KEY]: appState }); }
 
 function setupUIListeners() {
-    document.getElementById('next-turn-btn').addEventListener('click', nextTurn);
-    document.getElementById('global-limit').addEventListener('change', (e) => { appState.globalLimit = parseFloat(e.target.value); saveState(); });
-    document.getElementById('encounter-freq').addEventListener('change', (e) => { appState.encounterFreq = parseInt(e.target.value); saveState(); });
-    document.getElementById('gm-ignored').addEventListener('change', (e) => { appState.gmIgnored = e.target.checked; saveState(); });
-    document.getElementById('total-lock').addEventListener('change', (e) => { appState.totalLock = e.target.checked; saveState(); updateUI(); });
-    document.querySelectorAll('input[name="mode"]').forEach(el => el.addEventListener('change', (e) => { appState.mode = e.target.value; saveState(); updateUI(); }));
-    document.getElementById('save-token-btn').addEventListener('click', saveTokenSettings);
+    document.getElementById('next-turn-btn').onclick = nextTurn;
+    document.getElementById('global-limit').onchange = (e) => { appState.globalLimit = parseFloat(e.target.value); saveState(); };
+    document.getElementById('encounter-freq').onchange = (e) => { appState.encounterFreq = parseInt(e.target.value); saveState(); };
+    document.getElementById('gm-ignored').onchange = (e) => { appState.gmIgnored = e.target.checked; saveState(); };
+    document.getElementById('total-lock').onchange = (e) => { appState.totalLock = e.target.checked; saveState(); updateUI(); };
+    document.querySelectorAll('input[name="mode"]').forEach(el => el.onchange = (e) => { appState.mode = e.target.value; saveState(); updateUI(); });
+    document.getElementById('save-token-btn').onclick = saveTokenSettings;
 }
 
 function updateUI() {
@@ -123,9 +120,6 @@ function updateUI() {
     document.getElementById('encounter-freq').value = appState.encounterFreq;
     document.getElementById('gm-ignored').checked = appState.gmIgnored;
     document.getElementById('total-lock').checked = appState.totalLock;
-    const config = document.getElementById('config-section');
-    if(appState.totalLock) config.classList.add('locked-state'); else config.classList.remove('locked-state');
-    document.querySelectorAll('input[name="mode"]').forEach(r => r.checked = (r.value === appState.mode));
     document.getElementById('global-settings').className = appState.mode === 'global' ? '' : 'hidden';
     document.getElementById('individual-settings').className = appState.mode === 'individual' ? '' : 'hidden';
 }
@@ -133,15 +127,15 @@ function updateUI() {
 async function handleSelection(sel) {
     const editor = document.getElementById('token-editor');
     const msg = document.getElementById('no-selection-msg');
-    if (!sel || sel.length !== 1) { editor.classList.add('hidden'); msg.classList.remove('hidden'); return; }
+    if (!sel || sel.length !== 1) { editor.className = 'hidden'; msg.className = ''; return; }
     const item = (await OBR.scene.items.getItems([sel[0]]))[0];
     if (item && (item.layer === "CHARACTER" || item.layer === "MOUNT")) {
-        editor.classList.remove('hidden'); msg.classList.add('hidden');
-        document.getElementById('token-name').innerText = item.name ? item.name.substring(0, 15) : "Token";
+        editor.className = ''; msg.className = 'hidden';
+        document.getElementById('token-name').innerText = item.name || "Token";
         const data = item.metadata[TOKEN_DATA_KEY];
-        document.getElementById('token-limit').value = (data && data.individualLimit) ? data.individualLimit : "";
+        document.getElementById('token-limit').value = data?.individualLimit || "";
         document.getElementById('save-token-btn').dataset.itemId = item.id;
-    } else { editor.classList.add('hidden'); msg.classList.remove('hidden'); }
+    }
 }
 
 async function saveTokenSettings() {
@@ -149,9 +143,8 @@ async function saveTokenSettings() {
     const val = document.getElementById('token-limit').value;
     if (btn.dataset.itemId) {
         await OBR.scene.items.updateItems([btn.dataset.itemId], (items) => {
-            items[0].metadata[TOKEN_DATA_KEY] = { ...items[0].metadata[TOKEN_DATA_KEY], individualLimit: val !== "" ? parseFloat(val) : null };
+            items[0].metadata[TOKEN_DATA_KEY] = { ...items[0].metadata[TOKEN_DATA_KEY], individualLimit: val ? parseFloat(val) : null };
         });
-        showNotification("Configuración de token guardada");
     }
 }
 
