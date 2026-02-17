@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="utf-8">
+    <title>OSR Move</title>
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk@1.11.0/dist/index.js"></script>
     <style>
         body {
             background: #121212;
@@ -9,6 +11,9 @@
             font-family: 'Courier New', monospace;
             padding: 12px;
             font-size: 14px;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .row {
             display: flex;
@@ -26,10 +31,15 @@
             width: 100%;
             margin-top: 8px;
             font-weight: bold;
+            -webkit-user-select: none;
+            user-select: none;
         }
-        button:hover {
-            background: #33ff33;
-            color: #121212;
+        button:hover { background: #33ff33; color: #121212; }
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #2a2a2a;
+            color: #33ff33;
         }
         input[type="number"] {
             background: #1e1e1e;
@@ -37,6 +47,15 @@
             color: #33ff33;
             padding: 4px;
             width: 60px;
+            font-family: inherit;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        input[type="checkbox"] {
+            accent-color: #33ff33;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
         }
         .counter {
             background: #1e1e1e;
@@ -44,34 +63,57 @@
             border: 1px solid #33ff33;
             font-weight: bold;
         }
+        .divider {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 10px 0;
+        }
+        #rollResult {
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+        .warn {
+            color: #ff0000;
+            text-shadow: 0 0 5px #ff0000;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
+    <div class="row"><span>TURNO</span><span class="counter" id="turnCounter">1</span></div>
+    <div class="row"><span>LUZ</span><span class="counter" id="lightCounter">6</span></div>
+    <button id="lightToggle">LUZ: OFF</button>
+
+    <hr class="divider">
+
     <div class="row">
-        <span>Turno</span>
-        <span class="counter" id="turnCounter">1</span>
+        <label>LÍMITE (PIES)</label>
+        <input type="number" id="moveLimit" value="120" min="0" step="5">
     </div>
     <div class="row">
-        <span>Luz</span>
-        <span class="counter" id="lightCounter">6</span>
+        <label>ENCUENTRO (CAD. TURNOS)</label>
+        <input type="number" id="encounterFreq" value="2" min="1" step="1">
     </div>
+
+    <hr class="divider">
+
     <div class="row">
-        <span>Luz ON/OFF</span>
-        <button id="lightToggle">ENCENDER</button>
-    </div>
-    <div class="row">
-        <span>Límite (pies)</span>
-        <input type="number" id="moveLimit" value="30" step="5" min="5">
-    </div>
-    <div class="row">
-        <span>Frecuencia encuentro</span>
-        <input type="number" id="encounterFreq" value="6" min="1">
-    </div>
-    <div class="row">
-        <span>Aplicar a GM</span>
+        <span>Restringir GM</span>
         <input type="checkbox" id="applyToGm">
     </div>
-    <button id="nextTurn">Siguiente Turno</button>
+
+    <button id="rollEncounter">🎲 TIRAR ENCUENTRO</button>
+    <div id="rollResult">—</div>
+
+    <button id="nextTurn" style="background:#400; border-color:#f00; color:white;">
+        SIGUIENTE TURNO
+    </button>
 
     <script src="logic.js"></script>
 </body>
