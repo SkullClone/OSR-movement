@@ -1,5 +1,5 @@
 {
-  "name": "OSE Character Sheet",
+  "name": "OSE Sheet",
   "version": "1.0.0",
   "manifest_version": 1,
   "action": {
@@ -7,6 +7,6 @@
     "icon": "icon.svg",
     "popover": "index.html",
     "width": 400,
-    "height": 600
+    "height": 550
   }
 }
