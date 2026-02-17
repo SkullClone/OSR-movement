@@ -1,47 +1,122 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <script src="https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@latest/dist/obr-sdk.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #222639; color: #e0e0e0; padding: 12px; font-size: 13px; }
-        .section { margin-bottom: 12px; background: #2b304a; padding: 12px; border-radius: 8px; border: 1px solid #444; }
-        h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #BB86FC; text-transform: uppercase; letter-spacing: 1px; }
-        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        button { width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; background: #BB86FC; color: #000; margin-top: 5px; }
-        button:hover { filter: brightness(1.1); }
-        input[type="number"] { background: #111; border: 1px solid #555; color: white; padding: 4px; width: 45px; border-radius: 4px; text-align: center; }
-        .torch-box { border-left: 3px solid #FFAB40; padding-left: 8px; }
-        .tag { background: #333; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #03DAC6; }
-        .hidden { display: none; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #ffd700;
+            padding: 12px;
+            margin: 0;
+            font-size: 14px;
+        }
+        .panel {
+            background: #2d2d2d;
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        h2 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #ffd700;
+            padding-bottom: 4px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+        button {
+            background: #3d3d3d;
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #ffd700;
+            color: #1e1e1e;
+        }
+        .btn-large {
+            grid-column: span 3;
+            background: #8b4513;
+            border-color: #ff4500;
+        }
+        .btn-large:hover {
+            background: #ff4500;
+            color: white;
+        }
+        .warning {
+            color: #ff4500;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .info {
+            background: #000;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            margin: 8px 0;
+        }
     </style>
 </head>
 <body>
-    <div class="section">
-        <h3>⌛ Turno y Exploración</h3>
-        <div class="row"><span>Turno Actual:</span><span id="turn-count" class="tag">1</span></div>
-        <div class="row"><span>🎲 Encuentro cada:</span><input type="number" id="encounter-freq" value="2"></div>
-        <button id="next-turn-btn">⏭️ SIGUIENTE TURNO</button>
-    </div>
-
-    <div class="section torch-box">
-        <h3>🔥 Gestión de Antorchas</h3>
-        <div class="row"><span>Antorchas Activas:</span><input type="number" id="torch-count" value="0"></div>
-        <div class="row"><span>Turnos x Antorcha:</span><input type="number" id="torch-duration" value="6"></div>
-        <div id="torch-status" style="font-size: 0.8em; color: #FFAB40; text-align: center; margin-top: 5px;">
-            Sin antorchas activas
+    <div class="panel">
+        <h2>🏃 MOVIMIENTO (PIES)</h2>
+        <div class="stats">
+            <span>Total: <span id="totalMovement">30</span>'</span>
+            <span>Gastado: <span id="currentMovement">0</span>'</span>
+        </div>
+        <div class="btn-grid">
+            <button id="btn5">5'</button>
+            <button id="btn10">10'</button>
+            <button id="btn30">30'</button>
+        </div>
+        <div class="info" id="movimiento-info">
+            🟢 Movimiento disponible
         </div>
     </div>
 
-    <div class="section">
-        <h3>📏 Configuración</h3>
-        <label style="display: block; margin-bottom: 5px;"><input type="checkbox" id="gm-ignored" checked> Inmunidad GM</label>
-        <label style="display: block; color: #CF6679;"><input type="checkbox" id="total-lock"> 🔒 Bloqueo Total</label>
-        <div class="row" style="margin-top:10px;">
-            <span>Límite Global (<span id="unit-label">ft</span>):</span>
-            <input type="number" id="global-limit" value="120">
+    <div class="panel">
+        <h2>🔥 ANTORCHA</h2>
+        <div class="info" id="antorcha-info">
+            🕯️ Antorcha: 60 min
         </div>
+        <button id="btnTorch" style="width: 100%;">Encender Antorcha (60 min)</button>
     </div>
+
+    <div class="panel">
+        <h2>⚔️ TURNO / ENCUENTROS</h2>
+        <button id="btnTurn" class="btn-large">⏩ SIGUIENTE TURNO (10 min)</button>
+        <div id="encuentro-info" class="warning" style="min-height: 20px;"></div>
+    </div>
+
+    <div class="panel">
+        <h2>🔒 BLOQUEO</h2>
+        <div class="btn-grid">
+            <button id="btnLock">Bloquear Movimiento</button>
+            <button id="btnUnlock">Desbloquear</button>
+        </div>
+        <div class="info" id="bloqueo-info">🔓 Extensión Activa</div>
+    </div>
+
     <script src="logic.js"></script>
 </body>
 </html>
