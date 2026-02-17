@@ -1,26 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
-        body { background: #121212; color: #33ff33; font-family: monospace; padding: 15px; }
-        .row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
-        .counter { background: #1e1e1e; padding: 5px 10px; border: 1px solid #33ff33; font-weight: bold; }
-        button { background: #2a2a2a; border: 1px solid #33ff33; color: #33ff33; padding: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        button:hover { background: #33ff33; color: #121212; }
-        input { background: #1e1e1e; border: 1px solid #33ff33; color: #33ff33; padding: 4px; width: 60px; }
-        label { font-size: 10px; color: #888; text-transform: uppercase; }
+        body { background: #1a1a1a; color: #ddd; font-family: 'Courier New', monospace; padding: 10px; margin: 0; }
+        h3 { border-bottom: 1px solid #555; color: #fff; margin: 5px 0; font-size: 16px; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+        .attr { display: flex; justify-content: space-between; background: #222; padding: 4px; border: 1px solid #333; }
+        label { font-size: 11px; color: #aaa; }
+        input { background: #000; border: none; color: #33ff33; width: 40px; text-align: center; font-weight: bold; }
+        input[type="text"] { width: 100%; text-align: left; }
+        .save-box { font-size: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+        .save { background: #2a2a2a; padding: 3px; border: 1px solid #444; text-align: center; }
+        #no-selection { text-align: center; padding: 20px; color: #ff4444; }
+        #sheet { display: none; }
+        .section-title { font-size: 10px; color: #ffca28; margin: 10px 0 5px 0; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="row"><span>TURNO</span><span class="counter" id="turnCounter">1</span></div>
-    <div class="row"><span>LUZ</span><span class="counter" id="lightCounter">6</span></div>
-    <button id="lightToggle">LUZ: OFF</button>
-    <div class="row"><label>LÍMITE (PIES)</label><input type="number" id="moveLimit" value="120"></div>
-    <div class="row"><label>ENCUENTRO (CAD)</label><input type="number" id="encounterFreq" value="2"></div>
-    <div class="row"><span>Restringir GM</span><input type="checkbox" id="restrictGM"></div>
-    <button id="nextTurnBtn" style="background:#400; border-color:#f00; color:white;">SIGUIENTE TURNO</button>
+    <div id="no-selection">Selecciona un token para ver su ficha</div>
+    
+    <div id="sheet">
+        <input type="text" id="charName" placeholder="Nombre del Personaje" style="font-size: 18px; margin-bottom: 10px; background: transparent; border-bottom: 1px solid #555;">
+        
+        <div class="grid">
+            <div class="attr"><label>CLASE</label><input type="text" id="charClass" style="width:70px"></div>
+            <div class="attr"><label>NIVEL</label><input type="number" id="level" value="1"></div>
+        </div>
+
+        <div class="grid">
+            <div class="attr"><label>FUERZA</label><input type="number" id="str" value="10"></div>
+            <div class="attr"><label>INTEL</label><input type="number" id="int" value="10"></div>
+            <div class="attr"><label>SABID</label><input type="number" id="wis" value="10"></div>
+            <div class="attr"><label>DESTRE</label><input type="number" id="dex" value="10"></div>
+            <div class="attr"><label>CONST</label><input type="number" id="con" value="10"></div>
+            <div class="attr"><label>CARIS</label><input type="number" id="cha" value="10"></div>
+        </div>
+
+        <div class="grid">
+            <div class="attr" style="background: #311;"><label>P.G.</label><div><input type="number" id="hp" value="1">/<input type="number" id="hpMax" value="1"></div></div>
+            <div class="attr" style="background: #113;"><label>CA</label><input type="number" id="ac" value="9"></div>
+        </div>
+
+        <div class="section-title">SALVACIONES</div>
+        <div class="save-box">
+            <div class="save"><label>Muerte</label><br><input type="number" id="sDeath"></div>
+            <div class="save"><label>Varitas</label><br><input type="number" id="sWands"></div>
+            <div class="save"><label>Parálisis</label><br><input type="number" id="sPara"></div>
+            <div class="save"><label>Aliento</label><br><input type="number" id="sBreath"></div>
+            <div class="save"><label>Hechizos</label><br><input type="number" id="sSpell"></div>
+        </div>
+        
+        <button id="saveBtn" style="width:100%; margin-top:20px; background:#33ff33; color:#000; border:none; padding:10px; font-weight:bold; cursor:pointer;">GUARDAR CAMBIOS</button>
+    </div>
+
     <script src="logic.js"></script>
 </body>
 </html>
