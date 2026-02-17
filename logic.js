@@ -1,115 +1,75 @@
-// === VARIABLES DE ESTADO ===
-let movimientoMaximo = 30;
-let movimientoGastado = 0;
-let minutosAntorcha = 60;
-let extensionActiva = false;
+const M_ID = "com.osr_movement.data";
+let isGM = false, isLightOn = false, turns = 1, torch = 6;
 
-// === ELEMENTOS DEL DOM ===
-const totalSpan = document.getElementById('totalMovement');
-const currentSpan = document.getElementById('currentMovement');
-const antorchaDiv = document.getElementById('antorcha-info');
-const bloqueoDiv = document.getElementById('bloqueo-info');
-const btnTorch = document.getElementById('btnTorch');
-const btnTurn = document.getElementById('btnTurn');
-const btnLock = document.getElementById('btnLock');
-const btnUnlock = document.getElementById('btnUnlock');
-
-// === FUNCIONES DE ACTUALIZACIÓN DE UI ===
-function actualizarUI() {
-    if (totalSpan) totalSpan.textContent = movimientoMaximo;
-    if (currentSpan) currentSpan.textContent = movimientoGastado;
+OBR.onReady(async () => {
+    isGM = (await OBR.player.getRole()) === "GM";
     
-    if (antorchaDiv) {
-        if (minutosAntorcha <= 0) {
-            antorchaDiv.innerHTML = '🔴 Antorcha Apagada';
-        } else {
-            antorchaDiv.innerHTML = `🔥 Antorcha: ${minutosAntorcha} min`;
+    const lightBtn = document.getElementById('lightBtn');
+    lightBtn.onclick = () => {
+        isLightOn = !isLightOn;
+        lightBtn.innerText = isLightOn ? "LUZ: ENCENDIDA" : "LUZ: APAGADA";
+        lightBtn.style.background = isLightOn ? "#430" : "#222";
+    };
+
+    // BLOQUEO DE MOVIMIENTO: Se activa cada vez que algo cambia en la escena
+    OBR.scene.items.onChange(async (items) => {
+        const limit = parseInt(document.getElementById('limit').value);
+        const restrictGM = document.getElementById('restrictGM').checked;
+        const grid = await OBR.scene.grid.getScale();
+        const updates = [];
+
+        for (const item of items) {
+            if (item.layer === "CHARACTER") {
+                // Si el item no tiene metadatos de inicio, se los ponemos (posición actual)
+                const data = item.metadata[M_ID] || { x: item.position.x, y: item.position.y };
+                
+                // Solo bloqueamos si no es GM, o si es GM y la casilla está marcada
+                if (!isGM || restrictGM) {
+                    const dist = Math.sqrt(Math.pow(item.position.x - data.x, 2) + Math.pow(item.position.y - data.y, 2));
+                    const feet = (dist / grid.dpi) * grid.number;
+
+                    if (feet > limit + 1) { // Margen de error de 1 pie
+                        updates.push({ id: item.id, position: { x: data.x, y: data.y } });
+                        OBR.notification.show("Límite de movimiento de turno alcanzado.");
+                    }
+                }
+                
+                if (!item.metadata[M_ID]) {
+                    updates.push({ id: item.id, metadata: { [M_ID]: data } });
+                }
+            }
         }
-    }
-    
-    if (bloqueoDiv) {
-        bloqueoDiv.innerHTML = extensionActiva ? '🔒 Bloqueado' : '🔓 Extensión Activa';
-    }
-}
-
-// === FUNCIONES PRINCIPALES ===
-function gastarMovimiento(cantidad) {
-    if (extensionActiva) {
-        alert('🔒 Movimiento bloqueado. Usa "Siguiente Turno".');
-        return false;
-    }
-    
-    let nuevoGasto = movimientoGastado + cantidad;
-    if (nuevoGasto <= movimientoMaximo) {
-        movimientoGastado = nuevoGasto;
-        actualizarUI();
-        return true;
-    } else {
-        alert(`❌ Solo puedes mover ${movimientoMaximo - movimientoGastado} m más.`);
-        return false;
-    }
-}
-
-function siguienteTurno() {
-    // 1. Resetear el movimiento gastado
-    movimientoGastado = 0;
-    
-    // 2. Consumir antorcha (10 minutos por turno)
-    if (minutosAntorcha > 0) {
-        minutosAntorcha -= 10;
-        if (minutosAntorcha < 0) minutosAntorcha = 0;
-    }
-    
-    // 3. Comprobar Encuentro Errante (1/6)
-    let tirada = Math.floor(Math.random() * 6) + 1;
-    if (tirada === 1) {
-        alert('⚔️ ¡AVISO! ENCUENTRO ERRANTE.');
-    }
-    
-    // 4. Actualizar interfaz
-    actualizarUI();
-    
-    // 5. Desbloquear automáticamente si estaba bloqueado
-    if (extensionActiva) {
-        desbloquearUso();
-    }
-}
-
-function encenderAntorcha() {
-    minutosAntorcha = 60;
-    actualizarUI();
-    alert('🔥 Antorcha encendida (60 minutos).');
-}
-
-function bloquearUso() {
-    extensionActiva = true;
-    actualizarUI();
-}
-
-function desbloquearUso() {
-    extensionActiva = false;
-    actualizarUI();
-}
-
-// === CONFIGURACIÓN INICIAL Y EVENTOS ===
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎲 OSR Movement Controller v0.1 Cargado');
-    
-    // Botones de movimiento
-    const btn5 = document.getElementById('btn5');
-    const btn10 = document.getElementById('btn10');
-    const btn30 = document.getElementById('btn30');
-    
-    if (btn5) btn5.addEventListener('click', () => gastarMovimiento(5));
-    if (btn10) btn10.addEventListener('click', () => gastarMovimiento(10));
-    if (btn30) btn30.addEventListener('click', () => gastarMovimiento(30));
-    
-    // Botones de control
-    if (btnTorch) btnTorch.addEventListener('click', encenderAntorcha);
-    if (btnTurn) btnTurn.addEventListener('click', siguienteTurno);
-    if (btnLock) btnLock.addEventListener('click', bloquearUso);
-    if (btnUnlock) btnUnlock.addEventListener('click', desbloquearUso);
-    
-    // Inicializar UI
-    actualizarUI();
+        
+        if (updates.length > 0) {
+            await OBR.scene.items.updateItems(updates.map(u => u.id), (items) => {
+                updates.forEach(u => {
+                    const f = items.find(i => i.id === u.id);
+                    if (u.position) f.position = u.position;
+                    if (u.metadata) f.metadata[M_ID] = u.metadata[M_ID];
+                });
+            });
+        }
+    });
 });
+
+// SIGUIENTE TURNO: Resetea el punto de origen del movimiento
+document.getElementById('nextTurn').onclick = async () => {
+    turns++;
+    if (isLightOn && torch > 0) torch--;
+
+    const freq = parseInt(document.getElementById('encFreq').value);
+    document.getElementById('turnVal').innerText = turns;
+    document.getElementById('torchVal').innerText = isLightOn ? torch : `${torch} (Pausado)`;
+    document.getElementById('encVal').innerText = freq - (turns % freq);
+
+    if (turns % freq === 0) OBR.notification.show("¡TIRADA DE ENCUENTRO!", "WARNING");
+    if (isLightOn && torch === 0) OBR.notification.show("¡LA LUZ SE HA AGOTADO!", "ERROR");
+
+    // Actualizar el punto de inicio de todos los personajes a su posición actual
+    const chars = await OBR.scene.items.getItems(i => i.layer === "CHARACTER");
+    await OBR.scene.items.updateItems(chars.map(c => c.id), (items) => {
+        items.forEach(i => {
+            i.metadata[M_ID] = { x: i.position.x, y: i.position.y };
+        });
+    });
+};
