@@ -1,12 +1,12 @@
 {
-  "name": "OSR Movement",
+  "name": "OSE Character Sheet",
   "version": "1.0.0",
   "manifest_version": 1,
   "action": {
-    "title": "OSR Move",
+    "title": "Ficha OSE",
     "icon": "icon.svg",
     "popover": "index.html",
-    "width": 250,
-    "height": 450
+    "width": 400,
+    "height": 600
   }
 }
