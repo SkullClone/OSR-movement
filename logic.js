@@ -1,158 +1,125 @@
-const ID = "com.osr-movement.beta";
-const METADATA_KEY = `${ID}/config`;
-const TOKEN_DATA_KEY = `${ID}/data`;
+// === VARIABLES DE ESTADO ===
+let movimientoMaximo = 30;
+let movimientoGastado = 0;
+let minutosAntorcha = 60; // <--- Esta es la variable que usaremos
+let extensionActiva = false;
 
-let appState = {
-    turn: 1, 
-    encounterFreq: 2, 
-    globalLimit: 120, 
-    gmIgnored: true, 
-    totalLock: false,
-    torches: 0,
-    torchTurnsLeft: 0,
-    torchDuration: 6
-};
+// === ELEMENTOS DEL DOM ===
+const totalSpan = document.getElementById('totalMovement');
+const currentSpan = document.getElementById('currentMovement');
+const antorchaDiv = document.getElementById('antorcha-info');
+const bloqueoDiv = document.getElementById('bloqueo-info');
+const btnTorch = document.getElementById('btnTorch');
+const btnTurn = document.getElementById('btnTurn');
+const btnLock = document.getElementById('btnLock');
 
-let gridCache = { dpi: 300, scale: 5, unit: 'ft' };
-let currentUserRole = "PLAYER";
-
-OBR.onReady(async () => {
-    currentUserRole = await OBR.player.getRole();
-    await updateGridCache();
-    await loadSceneMetadata();
-
-    // Listeners de UI
-    document.getElementById('next-turn-btn').onclick = nextTurn;
-    document.getElementById('global-limit').onchange = (e) => { appState.globalLimit = parseFloat(e.target.value); saveState(); };
-    document.getElementById('encounter-freq').onchange = (e) => { appState.encounterFreq = parseInt(e.target.value); saveState(); };
-    document.getElementById('torch-count').onchange = (e) => { 
-        appState.torches = parseInt(e.target.value); 
-        if(appState.torches > 0 && appState.torchTurnsLeft <= 0) appState.torchTurnsLeft = appState.torchDuration;
-        saveState(); updateUI(); 
-    };
-    document.getElementById('torch-duration').onchange = (e) => { appState.torchDuration = parseInt(e.target.value); saveState(); };
-    document.getElementById('gm-ignored').onchange = (e) => { appState.gmIgnored = e.target.checked; saveState(); };
-    document.getElementById('total-lock').onchange = (e) => { appState.totalLock = e.target.checked; saveState(); updateUI(); };
-
-    OBR.scene.grid.onChange(updateGridCache);
-
-    // Vigilante de Movimiento
-    OBR.scene.items.onChange(async (items) => {
-        if (currentUserRole === "GM" && appState.gmIgnored) return;
-
-        const movedTokens = items.filter(i => i.layer === "CHARACTER" || i.layer === "MOUNT");
-        if (movedTokens.length === 0) return;
-
-        const updates = [];
-        const metadataUpdates = [];
-
-        for (const token of movedTokens) {
-            const data = token.metadata[TOKEN_DATA_KEY];
-            if (!data || !data.startPos) continue;
-
-            if (appState.totalLock) {
-                if (distPx(token.position, data.startPos) > 1) {
-                    updates.push({ id: token.id, position: data.startPos });
-                }
-                continue;
-            }
-
-            const actualDist = (distPx(data.startPos, token.position) / gridCache.dpi) * gridCache.scale;
-
-            if (actualDist > appState.globalLimit + 0.1) {
-                const safePos = data.lastValidPos || data.startPos;
-                if (token.position.x !== safePos.x || token.position.y !== safePos.y) {
-                    updates.push({ id: token.id, position: safePos });
-                }
-            } else {
-                const lastSaved = data.lastValidPos || data.startPos;
-                const change = (distPx(lastSaved, token.position) / gridCache.dpi) * gridCache.scale;
-                if (change > 0.5) { // Anti-spam: solo guardar cada 0.5 unidades
-                    metadataUpdates.push({
-                        id: token.id,
-                        metadata: { ...token.metadata, [TOKEN_DATA_KEY]: { ...data, lastValidPos: token.position } }
-                    });
-                }
-            }
-        }
-
-        if (updates.length > 0) {
-            await OBR.scene.items.updateItems(updates.map(u => u.id), (items) => {
-                items.forEach(item => { const u = updates.find(x => x.id === item.id); if(u) item.position = u.position; });
-            });
-            OBR.notification.show("🚫 Movimiento máximo alcanzado");
-        } else if (metadataUpdates.length > 0) {
-            await OBR.scene.items.updateItems(metadataUpdates.map(u => u.id), (items) => {
-                for(const item of items) {
-                    const u = metadataUpdates.find(x => x.id === item.id);
-                    if(u) item.metadata = u.metadata;
-                }
-            });
-        }
-    });
-});
-
-function distPx(p1, p2) { return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)); }
-
-async function updateGridCache() {
-    const grid = await OBR.scene.grid.getScale();
-    const dpi = await OBR.scene.grid.getDpi();
-    gridCache = { dpi: dpi || 300, scale: grid.parsed?.multiplier ?? 5, unit: grid.parsed?.unit ?? "ft" };
-    const label = document.getElementById('unit-label');
-    if(label) label.innerText = gridCache.unit;
-}
-
-async function nextTurn() {
-    appState.turn++;
+// === FUNCIONES DE ACTUALIZACIÓN DE UI ===
+function actualizarUI() {
+    if (totalSpan) totalSpan.textContent = movimientoMaximo;
+    if (currentSpan) currentSpan.textContent = movimientoGastado;
     
-    // Lógica de Antorchas
-    if (appState.torches > 0) {
-        appState.torchTurnsLeft--;
-        if (appState.torchTurnsLeft <= 0) {
-            appState.torches--;
-            if (appState.torches > 0) {
-                appState.torchTurnsLeft = appState.torchDuration;
-                OBR.notification.show("🔥 Una antorcha se ha agotado. Enciendes otra.", "INFO");
-            } else {
-                OBR.notification.show("🌑 ¡La última antorcha se ha apagado! Estás a oscuras.", "ERROR");
-            }
+    if (antorchaDiv) {
+        if (minutosAntorcha <= 0) {
+            antorchaDiv.innerHTML = '🔴 Antorcha Apagada';
+        } else {
+            antorchaDiv.innerHTML = `🔥 Antorcha: ${minutosAntorcha} min`;
         }
     }
-
-    if (appState.turn % appState.encounterFreq === 0) OBR.notification.show("🎲 ¡Chequeo de Encuentro Errante!", "WARNING");
-
-    saveState();
-
-    const items = await OBR.scene.items.getItems(i => i.layer === "CHARACTER" || i.layer === "MOUNT");
-    await OBR.scene.items.updateItems(items.map(i => i.id), (items) => {
-        items.forEach(item => {
-            item.metadata[TOKEN_DATA_KEY] = { startPos: item.position, lastValidPos: item.position };
-        });
-    });
-    updateUI();
-}
-
-async function loadSceneMetadata() {
-    const meta = await OBR.scene.getMetadata();
-    if (meta[METADATA_KEY]) appState = { ...appState, ...meta[METADATA_KEY] };
-    updateUI();
-}
-
-async function saveState() { await OBR.scene.setMetadata({ [METADATA_KEY]: appState }); }
-
-function updateUI() {
-    document.getElementById('turn-count').innerText = appState.turn;
-    document.getElementById('encounter-freq').value = appState.encounterFreq;
-    document.getElementById('torch-count').value = appState.torches;
-    document.getElementById('torch-duration').value = appState.torchDuration;
-    document.getElementById('global-limit').value = appState.globalLimit;
-    document.getElementById('gm-ignored').checked = appState.gmIgnored;
-    document.getElementById('total-lock').checked = appState.totalLock;
-
-    const status = document.getElementById('torch-status');
-    if (appState.torches > 0) {
-        status.innerText = `🔥 Luz para ${appState.torchTurnsLeft} turnos más`;
-    } else {
-        status.innerText = "🌑 Sin antorchas activas";
+    
+    // Control de bloqueo visual
+    if (bloqueoDiv) {
+        bloqueoDiv.innerHTML = extensionActiva ? '🔒 Bloqueado' : '🔓 Extensión Activa';
     }
-                                      }
+}
+
+function resetearMovimiento() {
+    movimientoGastado = 0;
+    actualizarUI();
+}
+
+// === FUNCIONES PRINCIPALES ===
+function gastarMovimiento(cantidad) {
+    if (extensionActiva) {
+        alert('🔒 Movimiento bloqueado. Usa "Siguiente Turno".');
+        return false;
+    }
+    
+    let nuevoGasto = movimientoGastado + cantidad;
+    if (nuevoGasto <= movimientoMaximo) {
+        movimientoGastado = nuevoGasto;
+        actualizarUI();
+        return true;
+    } else {
+        alert(`❌ Solo puedes mover ${movimientoMaximo - movimientoGastado} m más.`);
+        return false;
+    }
+}
+
+function siguienteTurno() {
+    // 1. Resetear el movimiento gastado a cero
+    movimientoGastado = 0;
+    
+    // 2. Consumir antorcha (10 minutos por turno)
+    if (minutosAntorcha > 0) {
+        minutosAntorcha -= 10;
+        if (minutosAntorcha < 0) minutosAntorcha = 0;
+    }
+    
+    // 3. Comprobar Encuentro Errante (1 de cada 6)
+    let tirada = Math.floor(Math.random() * 6) + 1;
+    if (tirada === 1) {
+        alert('⚔️ ¡AVISO! ENCUENTRO ERRANTE.');
+    } else {
+        console.log('Turno seguro.');
+    }
+    
+    // 4. Actualizar la interfaz
+    actualizarUI();
+    
+    // 5. Desbloquear automáticamente si estaba bloqueado
+    if (extensionActiva) {
+        desbloquearUso();
+    }
+}
+
+function encenderAntorcha() {
+    minutosAntorcha = 60;
+    actualizarUI();
+    alert('🔥 Antorcha encendida (60 minutos).');
+}
+
+function bloquearUso() {
+    extensionActiva = true;
+    actualizarUI();
+}
+
+function desbloquearUso() {
+    extensionActiva = false;
+    actualizarUI();
+}
+
+// === CONFIGURACIÓN INICIAL Y EVENTOS ===
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎲 OSR Movement Controller v0.1 Cargado');
+    
+    // Botones de movimiento (pies)
+    const btn5 = document.getElementById('btn5');
+    const btn10 = document.getElementById('btn10');
+    const btn30 = document.getElementById('btn30');
+    
+    if (btn5) btn5.addEventListener('click', () => gastarMovimiento(5));
+    if (btn10) btn10.addEventListener('click', () => gastarMovimiento(10));
+    if (btn30) btn30.addEventListener('click', () => gastarMovimiento(30));
+    
+    // Botones de control
+    if (btnTorch) btnTorch.addEventListener('click', encenderAntorcha);
+    if (btnTurn) btnTurn.addEventListener('click', siguienteTurno);
+    if (btnLock) btnLock.addEventListener('click', bloquearUso);
+    
+    // Botón de desbloqueo manual (por si acaso)
+    const btnUnlock = document.getElementById('btnUnlock');
+    if (btnUnlock) btnUnlock.addEventListener('click', desbloquearUso);
+    
+    // Inicializar UI
+    actualizarUI();
+});
