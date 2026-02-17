@@ -1,7 +1,7 @@
 // === VARIABLES DE ESTADO ===
 let movimientoMaximo = 30;
 let movimientoGastado = 0;
-let minutosAntorcha = 60; // <--- Esta es la variable que usaremos
+let minutosAntorcha = 60;
 let extensionActiva = false;
 
 // === ELEMENTOS DEL DOM ===
@@ -12,6 +12,7 @@ const bloqueoDiv = document.getElementById('bloqueo-info');
 const btnTorch = document.getElementById('btnTorch');
 const btnTurn = document.getElementById('btnTurn');
 const btnLock = document.getElementById('btnLock');
+const btnUnlock = document.getElementById('btnUnlock');
 
 // === FUNCIONES DE ACTUALIZACIÓN DE UI ===
 function actualizarUI() {
@@ -26,15 +27,9 @@ function actualizarUI() {
         }
     }
     
-    // Control de bloqueo visual
     if (bloqueoDiv) {
         bloqueoDiv.innerHTML = extensionActiva ? '🔒 Bloqueado' : '🔓 Extensión Activa';
     }
-}
-
-function resetearMovimiento() {
-    movimientoGastado = 0;
-    actualizarUI();
 }
 
 // === FUNCIONES PRINCIPALES ===
@@ -56,7 +51,7 @@ function gastarMovimiento(cantidad) {
 }
 
 function siguienteTurno() {
-    // 1. Resetear el movimiento gastado a cero
+    // 1. Resetear el movimiento gastado
     movimientoGastado = 0;
     
     // 2. Consumir antorcha (10 minutos por turno)
@@ -65,15 +60,13 @@ function siguienteTurno() {
         if (minutosAntorcha < 0) minutosAntorcha = 0;
     }
     
-    // 3. Comprobar Encuentro Errante (1 de cada 6)
+    // 3. Comprobar Encuentro Errante (1/6)
     let tirada = Math.floor(Math.random() * 6) + 1;
     if (tirada === 1) {
         alert('⚔️ ¡AVISO! ENCUENTRO ERRANTE.');
-    } else {
-        console.log('Turno seguro.');
     }
     
-    // 4. Actualizar la interfaz
+    // 4. Actualizar interfaz
     actualizarUI();
     
     // 5. Desbloquear automáticamente si estaba bloqueado
@@ -102,7 +95,7 @@ function desbloquearUso() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎲 OSR Movement Controller v0.1 Cargado');
     
-    // Botones de movimiento (pies)
+    // Botones de movimiento
     const btn5 = document.getElementById('btn5');
     const btn10 = document.getElementById('btn10');
     const btn30 = document.getElementById('btn30');
@@ -115,9 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnTorch) btnTorch.addEventListener('click', encenderAntorcha);
     if (btnTurn) btnTurn.addEventListener('click', siguienteTurno);
     if (btnLock) btnLock.addEventListener('click', bloquearUso);
-    
-    // Botón de desbloqueo manual (por si acaso)
-    const btnUnlock = document.getElementById('btnUnlock');
     if (btnUnlock) btnUnlock.addEventListener('click', desbloquearUso);
     
     // Inicializar UI
