@@ -1,6 +1,6 @@
 {
   "name": "OSR Movement Pro",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "manifest_version": 1,
   "description": "Control de movimiento OSR",
   "permissions": [
@@ -9,6 +9,5 @@
     { "name": "SCENE:METADATA" },
     { "name": "NOTIFICATIONS" }
   ],
-  "background_url": "index.html",
-  "icon": "https://cdn-icons-png.flaticon.com/512/566/566312.png"
+  "background_url": "index.html"
 }
