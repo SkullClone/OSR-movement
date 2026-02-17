@@ -4,29 +4,12 @@ OBR.onReady(async () => {
     const sheet = document.getElementById('sheet');
     const noSelection = document.getElementById('no-selection');
 
-    // Función para mapear los inputs
-    const getFields = () => ({
-        name: document.getElementById('charName'),
-        class: document.getElementById('charClass'),
-        level: document.getElementById('level'),
-        str: document.getElementById('str'),
-        int: document.getElementById('int'),
-        wis: document.getElementById('wis'),
-        dex: document.getElementById('dex'),
-        con: document.getElementById('con'),
-        cha: document.getElementById('cha'),
-        hp: document.getElementById('hp'),
-        hpMax: document.getElementById('hpMax'),
-        ac: document.getElementById('ac'),
-        sDeath: document.getElementById('sDeath'),
-        sWands: document.getElementById('sWands'),
-        sPara: document.getElementById('sPara'),
-        sBreath: document.getElementById('sBreath'),
-        sSpell: document.getElementById('sSpell')
-    });
+    const fields = [
+        'name', 'class', 'str', 'int', 'wis', 'dex', 'con', 'cha',
+        'hp', 'hpMax', 'ac', 'thac0', 'sDeath', 'sWands', 'sPara', 'sBreath', 'sSpell'
+    ];
 
-    // Cargar datos del token seleccionado
-    async function loadSelectedToken() {
+    async function updateSheet() {
         const selection = await OBR.player.getSelection();
         if (!selection || selection.length === 0) {
             sheet.style.display = 'none';
@@ -37,43 +20,38 @@ OBR.onReady(async () => {
         const items = await OBR.scene.items.getItems([selection[0]]);
         const token = items[0];
 
-        if (token) {
+        if (token && token.layer === "CHARACTER") {
             sheet.style.display = 'block';
             noSelection.style.display = 'none';
             const data = token.metadata[M_ID] || {};
-            const fields = getFields();
-            
-            // Rellenar la ficha
-            for (let key in fields) {
-                fields[key].value = data[key] || (fields[key].type === "number" ? 0 : "");
-            }
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = data[id] || "";
+            });
+        } else {
+            sheet.style.display = 'none';
+            noSelection.style.display = 'block';
+            noSelection.innerText = "SELECCIONA UN TOKEN DE PERSONAJE";
         }
     }
 
-    // Guardar datos en el token
     document.getElementById('saveBtn').onclick = async () => {
         const selection = await OBR.player.getSelection();
-        if (!selection) return;
+        if (!selection || selection.length === 0) return;
 
-        const fields = getFields();
         const data = {};
-        for (let key in fields) {
-            data[key] = fields[key].value;
-        }
+        fields.forEach(id => {
+            data[id] = document.getElementById(id).value;
+        });
 
         await OBR.scene.items.updateItems(selection, (items) => {
-            for (let item of items) {
+            items.forEach(item => {
                 item.metadata[M_ID] = data;
-            }
+            });
         });
-        OBR.notification.show("Ficha actualizada");
+        OBR.notification.show("Ficha OSE Guardada");
     };
 
-    // Detectar cuando el usuario cambia de selección
-    OBR.player.onSelectionChange(() => {
-        loadSelectedToken();
-    });
-
-    // Carga inicial
-    loadSelectedToken();
+    OBR.player.onSelectionChange(() => updateSheet());
+    updateSheet();
 });
