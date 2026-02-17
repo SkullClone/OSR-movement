@@ -1,13 +1,13 @@
 {
-  "manifest_version": 1,
   "name": "OSR Movement Controller",
-  "version": "0.1.0",
-  "description": "Beta 0.1 - Movimiento, Antorchas y Encuentros",
+  "version": "1.4.0",
+  "manifest_version": 1,
   "action": {
-    "title": "OSR Movement",
-    "icon": "https://cdn-icons-png.flaticon.com/512/566/566312.png",
+    "title": "OSR Move",
+    "icon": "icon.svg",
     "popover": "index.html",
-    "width": 300,
-    "height": 600
-  }
+    "width": 250,
+    "height": 480
+  },
+  "permissions": ["ITEM"]
 }
