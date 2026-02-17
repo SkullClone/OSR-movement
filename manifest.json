@@ -4,9 +4,9 @@
   "manifest_version": 1,
   "action": {
     "title": "OSR Move",
-    "icon": "icon.svg",
     "popover": "index.html",
     "width": 250,
-    "height": 500
-  }
+    "height": 450
+  },
+  "permissions": ["ITEM"]
 }
