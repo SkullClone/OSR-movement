@@ -1,121 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
-        body {
-            font-family: 'Courier New', monospace;
-            background: #1e1e1e;
-            color: #ffd700;
-            padding: 12px;
-            margin: 0;
-            font-size: 14px;
-        }
-        .panel {
-            background: #2d2d2d;
-            border: 2px solid #ffd700;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-        h2 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            text-align: center;
-            border-bottom: 1px solid #ffd700;
-            padding-bottom: 4px;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .btn-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin: 10px 0;
-        }
-        button {
-            background: #3d3d3d;
-            color: #ffd700;
-            border: 1px solid #ffd700;
-            border-radius: 4px;
-            padding: 8px;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover {
-            background: #ffd700;
-            color: #1e1e1e;
-        }
-        .btn-large {
-            grid-column: span 3;
-            background: #8b4513;
-            border-color: #ff4500;
-        }
-        .btn-large:hover {
-            background: #ff4500;
-            color: white;
-        }
-        .warning {
-            color: #ff4500;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 8px;
-        }
-        .info {
-            background: #000;
-            padding: 8px;
-            border-radius: 4px;
-            text-align: center;
-            margin: 8px 0;
-        }
+        body { font-family: monospace; background: #121212; color: #0f0; padding: 10px; }
+        .box { border: 1px solid #333; padding: 10px; margin-bottom: 10px; background: #1a1a1a; }
+        label { font-size: 10px; color: #888; display: block; margin-bottom: 3px; }
+        input { background: #000; border: 1px solid #0f0; color: #0f0; width: 100%; padding: 5px; box-sizing: border-box; margin-bottom: 10px; }
+        .stats { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        button { width: 100%; padding: 10px; cursor: pointer; font-family: monospace; font-weight: bold; }
+        #lightBtn { background: #222; color: #ffca28; border: 1px solid #ffca28; margin-bottom: 10px; }
+        #nextTurn { background: #800; color: white; border: none; font-size: 14px; }
+        #nextTurn:hover { background: #a00; }
+        .val { color: white; }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <h2>🏃 MOVIMIENTO (PIES)</h2>
-        <div class="stats">
-            <span>Total: <span id="totalMovement">30</span>'</span>
-            <span>Gastado: <span id="currentMovement">0</span>'</span>
-        </div>
-        <div class="btn-grid">
-            <button id="btn5">5'</button>
-            <button id="btn10">10'</button>
-            <button id="btn30">30'</button>
-        </div>
-        <div class="info" id="movimiento-info">
-            🟢 Movimiento disponible
-        </div>
+    <label>LÍMITE MOVIMIENTO (PIES)</label>
+    <input type="number" id="limit" value="120">
+
+    <div style="display:flex; align-items:center; gap:5px; margin-bottom:15px;">
+        <input type="checkbox" id="restrictGM" style="width:auto; margin:0;">
+        <label style="display:inline; cursor:pointer;" for="restrictGM">RESTRINGIR TAMBIÉN AL GM</label>
     </div>
 
-    <div class="panel">
-        <h2>🔥 ANTORCHA</h2>
-        <div class="info" id="antorcha-info">
-            🕯️ Antorcha: 60 min
-        </div>
-        <button id="btnTorch" style="width: 100%;">Encender Antorcha (60 min)</button>
+    <div class="box">
+        <div class="stats"><span>TURNO:</span> <span id="turnVal" class="val">1</span></div>
+        <div class="stats"><span>LUZ:</span> <span id="torchVal" class="val">6</span></div>
+        <div style="font-size:9px; color:#555; text-align:right;">PROX. ENCUENTRO EN: <span id="encVal">2</span></div>
     </div>
 
-    <div class="panel">
-        <h2>⚔️ TURNO / ENCUENTROS</h2>
-        <button id="btnTurn" class="btn-large">⏩ SIGUIENTE TURNO (10 min)</button>
-        <div id="encuentro-info" class="warning" style="min-height: 20px;"></div>
-    </div>
+    <button id="lightBtn">LUZ: APAGADA</button>
+    
+    <label>ENCUENTRO CADA X TURNOS</label>
+    <input type="number" id="encFreq" value="2">
 
-    <div class="panel">
-        <h2>🔒 BLOQUEO</h2>
-        <div class="btn-grid">
-            <button id="btnLock">Bloquear Movimiento</button>
-            <button id="btnUnlock">Desbloquear</button>
-        </div>
-        <div class="info" id="bloqueo-info">🔓 Extensión Activa</div>
-    </div>
+    <button id="nextTurn">SIGUIENTE TURNO</button>
 
     <script src="logic.js"></script>
 </body>
