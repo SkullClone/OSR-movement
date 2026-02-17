@@ -1,113 +1,182 @@
-const M_ID = "com.skullclone.osrmovement";
-let isGM = false;
-let isLightOn = false;
-let turns = 1;
-let torch = 6;
+(function() {
+    const METADATA_KEY = "com.skullclone.osr_move";
 
-OBR.onReady(async () => {
-    // Determinar si el usuario es GM
-    const role = await OBR.player.getRole();
-    isGM = role === "GM";
+    OBR.onReady(async () => {
+        // Elementos DOM
+        const turnSpan = document.getElementById('turnCounter');
+        const lightSpan = document.getElementById('lightCounter');
+        const lightToggle = document.getElementById('lightToggle');
+        const moveLimitInput = document.getElementById('moveLimit');
+        const encounterFreqInput = document.getElementById('encounterFreq');
+        const applyToGmCheck = document.getElementById('applyToGm');
+        const nextTurnBtn = document.getElementById('nextTurn');
 
-    // Inicializar interfaz de Luz
-    const lightBtn = document.getElementById('lightBtn');
-    lightBtn.onclick = () => {
-        isLightOn = !isLightOn;
-        lightBtn.innerText = isLightOn ? "LUZ: ENCENDIDA" : "LUZ: APAGADA";
-        lightBtn.style.background = isLightOn ? "#430" : "#222";
-        lightBtn.style.borderColor = isLightOn ? "#ffca28" : "#555";
-    };
+        // Estado (se cargará desde metadatos de la escena)
+        let state = {
+            turn: 1,
+            lightOn: false,
+            lightRemaining: 6,
+            moveLimit: 30,
+            encounterFreq: 6,
+            applyToGM: false
+        };
 
-    // --- LÓGICA DE BLOQUEO DE MOVIMIENTO ---
-    OBR.scene.items.onChange(async (items) => {
-        const limitFeet = parseInt(document.getElementById('limit').value) || 120;
-        const restrictGM = document.getElementById('restrictGM').checked;
-        const grid = await OBR.scene.grid.getScale();
+        // Cargar estado guardado
+        await loadState();
 
-        const updates = [];
+        // Actualizar UI
+        updateUI();
 
-        for (const item of items) {
-            // Solo actuar sobre personajes (Tokens)
-            if (item.layer === "CHARACTER") {
-                const data = item.metadata[M_ID] || { x: item.position.x, y: item.position.y };
+        // --- Lógica de bloqueo de movimiento ---
+        OBR.scene.items.onChange(async (changedItems) => {
+            const limitFeet = state.moveLimit;
+            const restrictGM = state.applyToGM;
+            const tokens = changedItems.filter(i => i.type === 'CHARACTER');
+            if (tokens.length === 0) return;
 
-                // Si no es el GM, o si es el GM y la casilla de restricción está marcada
-                if (!isGM || restrictGM) {
-                    const dx = item.position.x - data.x;
-                    const dy = item.position.y - data.y;
-                    const distPx = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // Convertir píxeles a pies según la escala del mapa
-                    const distFeet = (distPx / grid.dpi) * grid.number;
+            // Obtener jugadores GM para la comprobación
+            const players = await OBR.player.getPlayers();
+            const gmIds = players.filter(p => p.role === 'GM').map(p => p.id);
 
-                    // Bloquear si supera el límite (+2 pies de margen para evitar errores de redondeo)
-                    if (distFeet > limitFeet + 2) {
-                        updates.push({
-                            id: item.id,
-                            position: { x: data.x, y: data.y }
-                        });
-                        OBR.notification.show("¡Límite de movimiento alcanzado!");
+            const updates = [];
+
+            for (const token of tokens) {
+                // Posición inicial guardada (si no existe, la guardamos ahora)
+                let startPos = token.metadata?.[METADATA_KEY];
+                if (!startPos) {
+                    // Si no tiene metadato, se lo asignamos (primera vez)
+                    updates.push({
+                        id: token.id,
+                        metadata: { [METADATA_KEY]: { x: token.x, y: token.y, turn: state.turn } }
+                    });
+                    continue;
+                }
+
+                // Si la posición inicial es de un turno anterior, la actualizamos silenciosamente
+                if (startPos.turn !== state.turn) {
+                    updates.push({
+                        id: token.id,
+                        metadata: { [METADATA_KEY]: { x: token.x, y: token.y, turn: state.turn } }
+                    });
+                    continue;
+                }
+
+                // Comprobar si debemos aplicar restricción a este token
+                let shouldRestrict = true;
+                if (!restrictGM) {
+                    // Si el token fue creado por un GM, no lo restringimos
+                    if (gmIds.includes(token.createdUserId)) {
+                        shouldRestrict = false;
                     }
                 }
 
-                // Si el item es nuevo y no tiene metadatos, se los asignamos
-                if (!item.metadata[M_ID]) {
-                    updates.push({
-                        id: item.id,
-                        metadata: { [M_ID]: { x: item.position.x, y: item.position.y } }
-                    });
+                if (shouldRestrict) {
+                    // Calcular distancia recorrida (en pies)
+                    const distance = await OBR.scene.grid.distanceBetween(
+                        { x: startPos.x, y: startPos.y },
+                        { x: token.x, y: token.y }
+                    );
+
+                    if (distance > limitFeet + 0.1) { // pequeño margen
+                        // Revertir posición
+                        updates.push({
+                            id: token.id,
+                            position: { x: startPos.x, y: startPos.y }
+                        });
+                        OBR.notification.show(`Movimiento excede ${limitFeet} pies`, 'WARNING');
+                    }
                 }
             }
-        }
 
-        // Aplicar los cambios de posición o metadatos
-        if (updates.length > 0) {
-            await OBR.scene.items.updateItems(updates.map(u => u.id), (items) => {
-                updates.forEach(u => {
-                    const found = items.find(i => i.id === u.id);
-                    if (u.position) found.position = u.position;
-                    if (u.metadata) found.metadata[M_ID] = u.metadata[M_ID];
-                });
-            });
-        }
-    });
-});
-
-// --- LÓGICA DE SIGUIENTE TURNO ---
-document.getElementById('nextTurn').onclick = async () => {
-    // 1. Avanzar Turno
-    turns++;
-    
-    // 2. Consumir luz solo si está encendida
-    if (isLightOn && torch > 0) {
-        torch--;
-    }
-
-    // 3. Calcular Encuentros
-    const freq = parseInt(document.getElementById('encFreq').value) || 2;
-    const nextEnc = freq - (turns % freq);
-
-    // 4. Actualizar UI
-    document.getElementById('turnVal').innerText = turns;
-    document.getElementById('torchVal').innerText = isLightOn ? torch : `${torch} (Off)`;
-    document.getElementById('encVal').innerText = (nextEnc === freq ? 0 : nextEnc) + " turnos";
-
-    // 5. Notificaciones
-    if (turns % freq === 0) {
-        OBR.notification.show("¡TIRADA DE ENCUENTRO ALEATORIO!", "WARNING");
-    }
-    if (isLightOn && torch === 0) {
-        OBR.notification.show("¡LA ANTORCHA SE HA AGOTADO!", "ERROR");
-    }
-
-    // 6. RESETEAR ORIGEN DE MOVIMIENTO
-    // Al pulsar siguiente turno, la posición actual se convierte en el nuevo "punto de partida"
-    const characters = await OBR.scene.items.getItems((i) => i.layer === "CHARACTER");
-    await OBR.scene.items.updateItems(characters.map(c => c.id), (items) => {
-        items.forEach(item => {
-            item.metadata[M_ID] = { x: item.position.x, y: item.position.y };
+            if (updates.length > 0) {
+                await OBR.scene.items.updateItems(updates);
+            }
         });
-    });
 
-    OBR.notification.show("Nuevo turno: Movimiento reiniciado.");
-};
+        // --- Botón Siguiente Turno ---
+        nextTurnBtn.addEventListener('click', async () => {
+            state.turn++;
+            if (state.lightOn && state.lightRemaining > 0) {
+                state.lightRemaining--;
+            }
+
+            // Comprobar encuentro
+            if (state.turn % state.encounterFreq === 0) {
+                OBR.notification.show('¡Tirada de encuentro!', 'INFO');
+            }
+
+            // Resetear posiciones iniciales de todos los tokens
+            const allTokens = await OBR.scene.items.getItems(i => i.type === 'CHARACTER');
+            const resetUpdates = allTokens.map(t => ({
+                id: t.id,
+                metadata: { [METADATA_KEY]: { x: t.x, y: t.y, turn: state.turn } }
+            }));
+            if (resetUpdates.length > 0) {
+                await OBR.scene.items.updateItems(resetUpdates);
+            }
+
+            await saveState();
+            updateUI();
+        });
+
+        // --- Botón Luz ---
+        lightToggle.addEventListener('click', async () => {
+            state.lightOn = !state.lightOn;
+            if (state.lightOn && state.lightRemaining === 0) {
+                state.lightRemaining = 6; // Reiniciar si estaba a 0
+            }
+            await saveState();
+            updateUI();
+        });
+
+        // --- Inputs ---
+        moveLimitInput.addEventListener('change', () => {
+            state.moveLimit = parseInt(moveLimitInput.value, 10) || 30;
+            saveState();
+        });
+        encounterFreqInput.addEventListener('change', () => {
+            state.encounterFreq = parseInt(encounterFreqInput.value, 10) || 6;
+            saveState();
+        });
+        applyToGmCheck.addEventListener('change', () => {
+            state.applyToGM = applyToGmCheck.checked;
+            saveState();
+        });
+
+        // --- Funciones de persistencia ---
+        async function loadState() {
+            const meta = await OBR.scene.getMetadata() || {};
+            const saved = meta[METADATA_KEY] || {};
+            state.turn = saved.turn ?? 1;
+            state.lightOn = saved.lightOn ?? false;
+            state.lightRemaining = saved.lightRemaining ?? 6;
+            state.moveLimit = saved.moveLimit ?? 30;
+            state.encounterFreq = saved.encounterFreq ?? 6;
+            state.applyToGM = saved.applyToGM ?? false;
+        }
+
+        async function saveState() {
+            await OBR.scene.setMetadata({
+                [METADATA_KEY]: {
+                    turn: state.turn,
+                    lightOn: state.lightOn,
+                    lightRemaining: state.lightRemaining,
+                    moveLimit: state.moveLimit,
+                    encounterFreq: state.encounterFreq,
+                    applyToGM: state.applyToGM
+                }
+            });
+            updateUI();
+        }
+
+        function updateUI() {
+            turnSpan.textContent = state.turn;
+            lightSpan.textContent = state.lightOn ? state.lightRemaining : 'OFF';
+            lightToggle.textContent = state.lightOn ? 'APAGAR' : 'ENCENDER';
+            lightToggle.style.background = state.lightOn ? '#430' : '#2a2a2a';
+            moveLimitInput.value = state.moveLimit;
+            encounterFreqInput.value = state.encounterFreq;
+            applyToGmCheck.checked = state.applyToGM;
+        }
+    });
+})();
