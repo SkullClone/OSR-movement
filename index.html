@@ -1,120 +1,34 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="utf-8">
-    <title>OSR Move</title>
-    <script src="https://unpkg.com/@owlbear-rodeo/sdk@1.11.0/dist/index.js"></script>
+    <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
-        body {
-            background: #121212;
-            color: #33ff33;
-            font-family: 'Courier New', monospace;
-            padding: 12px;
-            font-size: 14px;
-            overflow: hidden;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 8px 0;
-        }
-        button {
-            background: #2a2a2a;
-            border: 1px solid #33ff33;
-            color: #33ff33;
-            font-family: inherit;
-            padding: 6px 12px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 8px;
-            font-weight: bold;
-            -webkit-user-select: none;
-            user-select: none;
-        }
+        body { background: #121212; color: #33ff33; font-family: monospace; padding: 12px; font-size: 13px; }
+        .container { display: flex; flex-direction: column; gap: 10px; }
+        .row { display: flex; align-items: center; justify-content: space-between; }
+        .counter { font-size: 20px; font-weight: bold; background: #1e1e1e; padding: 5px 10px; border: 1px solid #33ff33; color: white; }
+        button { background: #2a2a2a; border: 1px solid #33ff33; color: #33ff33; padding: 8px; cursor: pointer; font-weight: bold; width: 100%; }
         button:hover { background: #33ff33; color: #121212; }
-        button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            background: #2a2a2a;
-            color: #33ff33;
-        }
-        input[type="number"] {
-            background: #1e1e1e;
-            border: 1px solid #33ff33;
-            color: #33ff33;
-            padding: 4px;
-            width: 60px;
-            font-family: inherit;
-            -webkit-user-select: text;
-            user-select: text;
-        }
-        input[type="checkbox"] {
-            accent-color: #33ff33;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-        .counter {
-            background: #1e1e1e;
-            padding: 4px 10px;
-            border: 1px solid #33ff33;
-            font-weight: bold;
-        }
-        .divider {
-            border: none;
-            border-top: 1px solid #2a2a2a;
-            margin: 10px 0;
-        }
-        #rollResult {
-            text-align: center;
-            font-size: 11px;
-            color: #888;
-            margin-top: 4px;
-            min-height: 16px;
-        }
-        .warn {
-            color: #ff0000;
-            text-shadow: 0 0 5px #ff0000;
-            animation: blink 1s infinite;
-        }
-        @keyframes blink {
-            50% { opacity: 0.5; }
-        }
+        input { background: #1e1e1e; border: 1px solid #33ff33; color: #33ff33; padding: 4px; width: 50px; }
+        .label { text-transform: uppercase; font-size: 10px; color: #888; }
     </style>
 </head>
 <body>
-    <div class="row"><span>TURNO</span><span class="counter" id="turnCounter">1</span></div>
-    <div class="row"><span>LUZ</span><span class="counter" id="lightCounter">6</span></div>
-    <button id="lightToggle">LUZ: OFF</button>
-
-    <hr class="divider">
-
-    <div class="row">
-        <label>LÍMITE (PIES)</label>
-        <input type="number" id="moveLimit" value="120" min="0" step="5">
+    <div class="container">
+        <div class="row"><span>Turno</span><div class="counter" id="turnCounter">1</div></div>
+        <div class="row"><span>Antorcha</span><div style="display:flex; gap:5px; align-items:center;">
+            <span id="lightCounter" class="counter">6</span>
+            <button id="toggleLightBtn" style="width:auto; font-size:10px;">ON/OFF</button>
+        </div></div>
+        <div class="row"><span class="label">Encuentro cada</span><input type="number" id="encFreq" value="2"></div>
+        <div class="row"><span class="label">Límite (Pies)</span><input type="number" id="moveLimit" value="120"></div>
+        <div class="row">
+            <input type="checkbox" id="restrictGM" style="width:auto;">
+            <span class="label">Restringir GM</span>
+        </div>
+        <button id="nextTurnBtn" style="background:#400; color:white;">SIGUIENTE TURNO</button>
     </div>
-    <div class="row">
-        <label>ENCUENTRO (CAD. TURNOS)</label>
-        <input type="number" id="encounterFreq" value="2" min="1" step="1">
-    </div>
-
-    <hr class="divider">
-
-    <div class="row">
-        <span>Restringir GM</span>
-        <input type="checkbox" id="applyToGm">
-    </div>
-
-    <button id="rollEncounter">🎲 TIRAR ENCUENTRO</button>
-    <div id="rollResult">—</div>
-
-    <button id="nextTurn" style="background:#400; border-color:#f00; color:white;">
-        SIGUIENTE TURNO
-    </button>
-
     <script src="logic.js"></script>
 </body>
 </html>
