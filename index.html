@@ -1,41 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
+    <meta charset="utf-8">
     <style>
-        body { font-family: monospace; background: #121212; color: #0f0; padding: 10px; }
-        .box { border: 1px solid #333; padding: 10px; margin-bottom: 10px; background: #1a1a1a; }
-        label { font-size: 10px; color: #888; display: block; margin-bottom: 3px; }
-        input { background: #000; border: 1px solid #0f0; color: #0f0; width: 100%; padding: 5px; box-sizing: border-box; margin-bottom: 10px; }
-        .stats { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
-        button { width: 100%; padding: 10px; cursor: pointer; font-family: monospace; font-weight: bold; }
-        #lightBtn { background: #222; color: #ffca28; border: 1px solid #ffca28; margin-bottom: 10px; }
-        #nextTurn { background: #800; color: white; border: none; font-size: 14px; }
-        #nextTurn:hover { background: #a00; }
-        .val { color: white; }
+        body {
+            background: #121212;
+            color: #33ff33;
+            font-family: 'Courier New', monospace;
+            padding: 12px;
+            font-size: 14px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+        }
+        button {
+            background: #2a2a2a;
+            border: 1px solid #33ff33;
+            color: #33ff33;
+            font-family: inherit;
+            padding: 6px 12px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #33ff33;
+            color: #121212;
+        }
+        input[type="number"] {
+            background: #1e1e1e;
+            border: 1px solid #33ff33;
+            color: #33ff33;
+            padding: 4px;
+            width: 60px;
+        }
+        .counter {
+            background: #1e1e1e;
+            padding: 4px 10px;
+            border: 1px solid #33ff33;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <label>LÍMITE MOVIMIENTO (PIES)</label>
-    <input type="number" id="limit" value="120">
-
-    <div style="display:flex; align-items:center; gap:5px; margin-bottom:15px;">
-        <input type="checkbox" id="restrictGM" style="width:auto; margin:0;">
-        <label style="display:inline; cursor:pointer;" for="restrictGM">RESTRINGIR TAMBIÉN AL GM</label>
+    <div class="row">
+        <span>Turno</span>
+        <span class="counter" id="turnCounter">1</span>
     </div>
-
-    <div class="box">
-        <div class="stats"><span>TURNO:</span> <span id="turnVal" class="val">1</span></div>
-        <div class="stats"><span>LUZ:</span> <span id="torchVal" class="val">6</span></div>
-        <div style="font-size:9px; color:#555; text-align:right;">PROX. ENCUENTRO EN: <span id="encVal">2</span></div>
+    <div class="row">
+        <span>Luz</span>
+        <span class="counter" id="lightCounter">6</span>
     </div>
-
-    <button id="lightBtn">LUZ: APAGADA</button>
-    
-    <label>ENCUENTRO CADA X TURNOS</label>
-    <input type="number" id="encFreq" value="2">
-
-    <button id="nextTurn">SIGUIENTE TURNO</button>
+    <div class="row">
+        <span>Luz ON/OFF</span>
+        <button id="lightToggle">ENCENDER</button>
+    </div>
+    <div class="row">
+        <span>Límite (pies)</span>
+        <input type="number" id="moveLimit" value="30" step="5" min="5">
+    </div>
+    <div class="row">
+        <span>Frecuencia encuentro</span>
+        <input type="number" id="encounterFreq" value="6" min="1">
+    </div>
+    <div class="row">
+        <span>Aplicar a GM</span>
+        <input type="checkbox" id="applyToGm">
+    </div>
+    <button id="nextTurn">Siguiente Turno</button>
 
     <script src="logic.js"></script>
 </body>
