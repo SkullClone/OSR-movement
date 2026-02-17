@@ -1,60 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <script src="https://unpkg.com/@owlbear-rodeo/sdk"></script>
     <style>
-        body { background: #1a1a1a; color: #ddd; font-family: 'Courier New', monospace; padding: 10px; margin: 0; }
-        h3 { border-bottom: 1px solid #555; color: #fff; margin: 5px 0; font-size: 16px; text-transform: uppercase; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
-        .attr { display: flex; justify-content: space-between; background: #222; padding: 4px; border: 1px solid #333; }
-        label { font-size: 11px; color: #aaa; }
-        input { background: #000; border: none; color: #33ff33; width: 40px; text-align: center; font-weight: bold; }
-        input[type="text"] { width: 100%; text-align: left; }
-        .save-box { font-size: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
-        .save { background: #2a2a2a; padding: 3px; border: 1px solid #444; text-align: center; }
-        #no-selection { text-align: center; padding: 20px; color: #ff4444; }
+        body { background: #121212; color: #e0e0e0; font-family: monospace; padding: 10px; margin: 0; }
+        .section { font-size: 10px; color: #ffca28; text-transform: uppercase; margin: 10px 0 5px; border-bottom: 1px solid #333; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .box { background: #1a1a1a; border: 1px solid #333; padding: 4px; text-align: center; }
+        .box label { font-size: 9px; display: block; color: #888; }
+        input { background: transparent; border: none; color: #33ff33; width: 100%; text-align: center; font-size: 14px; font-family: inherit; }
+        .saves { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+        .save-box { background: #222; border: 1px solid #444; padding: 4px 0; text-align: center; font-size: 9px; }
+        #no-selection { padding: 50px 10px; text-align: center; color: #555; font-size: 12px; }
         #sheet { display: none; }
-        .section-title { font-size: 10px; color: #ffca28; margin: 10px 0 5px 0; font-weight: bold; }
+        button { width: 100%; margin-top: 15px; background: #33ff33; color: #000; border: none; padding: 10px; font-weight: bold; cursor: pointer; font-family: inherit; }
     </style>
 </head>
 <body>
-    <div id="no-selection">Selecciona un token para ver su ficha</div>
-    
+    <div id="no-selection">SELECCIONA UN TOKEN DE PERSONAJE</div>
+
     <div id="sheet">
-        <input type="text" id="charName" placeholder="Nombre del Personaje" style="font-size: 18px; margin-bottom: 10px; background: transparent; border-bottom: 1px solid #555;">
-        
-        <div class="grid">
-            <div class="attr"><label>CLASE</label><input type="text" id="charClass" style="width:70px"></div>
-            <div class="attr"><label>NIVEL</label><input type="number" id="level" value="1"></div>
+        <div style="display:flex; gap:10px; border-bottom:1px solid #333; padding-bottom:5px;">
+            <input type="text" id="name" placeholder="NOMBRE" style="text-align:left; font-size:16px;">
+            <input type="text" id="class" placeholder="CLASE/NIVEL" style="width:120px;">
         </div>
 
+        <div class="section">Atributos</div>
         <div class="grid">
-            <div class="attr"><label>FUERZA</label><input type="number" id="str" value="10"></div>
-            <div class="attr"><label>INTEL</label><input type="number" id="int" value="10"></div>
-            <div class="attr"><label>SABID</label><input type="number" id="wis" value="10"></div>
-            <div class="attr"><label>DESTRE</label><input type="number" id="dex" value="10"></div>
-            <div class="attr"><label>CONST</label><input type="number" id="con" value="10"></div>
-            <div class="attr"><label>CARIS</label><input type="number" id="cha" value="10"></div>
+            <div class="box"><label>FUE</label><input type="number" id="str" value="10"></div>
+            <div class="box"><label>INT</label><input type="number" id="int" value="10"></div>
+            <div class="box"><label>SAB</label><input type="number" id="wis" value="10"></div>
+            <div class="box"><label>DES</label><input type="number" id="dex" value="10"></div>
+            <div class="box"><label>CON</label><input type="number" id="con" value="10"></div>
+            <div class="box"><label>CAR</label><input type="number" id="cha" value="10"></div>
         </div>
 
-        <div class="grid">
-            <div class="attr" style="background: #311;"><label>P.G.</label><div><input type="number" id="hp" value="1">/<input type="number" id="hpMax" value="1"></div></div>
-            <div class="attr" style="background: #113;"><label>CA</label><input type="number" id="ac" value="9"></div>
+        <div class="grid" style="margin-top:10px;">
+            <div class="box" style="border-color:#822;"><label>P.G.</label>
+                <div style="display:flex;"><input type="number" id="hp">/<input type="number" id="hpMax"></div>
+            </div>
+            <div class="box" style="border-color:#228;"><label>CA</label><input type="number" id="ac" value="9"></div>
+            <div class="box"><label>GAC0</label><input type="number" id="thac0" value="20"></div>
         </div>
 
-        <div class="section-title">SALVACIONES</div>
-        <div class="save-box">
-            <div class="save"><label>Muerte</label><br><input type="number" id="sDeath"></div>
-            <div class="save"><label>Varitas</label><br><input type="number" id="sWands"></div>
-            <div class="save"><label>Parálisis</label><br><input type="number" id="sPara"></div>
-            <div class="save"><label>Aliento</label><br><input type="number" id="sBreath"></div>
-            <div class="save"><label>Hechizos</label><br><input type="number" id="sSpell"></div>
+        <div class="section">Salvaciones</div>
+        <div class="saves">
+            <div class="save-box"><label>VEN</label><input type="number" id="sDeath"></div>
+            <div class="save-box"><label>VAR</label><input type="number" id="sWands"></div>
+            <div class="save-box"><label>PAR</label><input type="number" id="sPara"></div>
+            <div class="save-box"><label>ALI</label><input type="number" id="sBreath"></div>
+            <div class="save-box"><label>HEC</label><input type="number" id="sSpell"></div>
         </div>
-        
-        <button id="saveBtn" style="width:100%; margin-top:20px; background:#33ff33; color:#000; border:none; padding:10px; font-weight:bold; cursor:pointer;">GUARDAR CAMBIOS</button>
+
+        <button id="saveBtn">GUARDAR EN TOKEN</button>
     </div>
-
     <script src="logic.js"></script>
 </body>
 </html>
