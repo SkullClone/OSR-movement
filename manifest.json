@@ -1,24 +1,12 @@
 {
+  "manifest_version": 1,
   "name": "OSR Movement Controller",
   "version": "0.1.0",
-  "manifest_version": 1,
-  "description": "Control de movimiento y antorchas para OSR",
+  "description": "Beta 0.1 - Movimiento y Antorchas",
   "action": {
     "title": "OSR Movement",
     "icon": "https://cdn-icons-png.flaticon.com/512/566/566312.png",
     "popover": "index.html",
-    "width": 300,
-    "height": 550
-  }
-}{
-  "name": "OSR Movement Pro",
-  "version": "1.1.9",
-  "manifest_version": 1,
-  "description": "Control de movimiento OSR",
-  "action": {
-    "title": "OSR Movement Pro",
-    "icon": "https://cdn-icons-png.flaticon.com/512/566/566312.png",
-    "popover": "https://skullclone.github.io/OSR-movement/index.html",
     "width": 300,
     "height": 550
   }
