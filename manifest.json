@@ -1,5 +1,5 @@
 {
-  "name": "OSR Movement Control",
+  "name": "OSR Movement",
   "version": "1.0.0",
   "manifest_version": 1,
   "action": {
@@ -7,7 +7,6 @@
     "icon": "icon.svg",
     "popover": "index.html",
     "width": 250,
-    "height": 500
-  },
-  "permissions": ["ITEM"]
+    "height": 450
+  }
 }
